@@ -24,5 +24,5 @@ RUN npm ci --only=production
 
 COPY --from=client-builder /app/client/dist ./client/dist
 
-CMD ["node", "index.js"]
+CMD ["node", "app.js"]
 

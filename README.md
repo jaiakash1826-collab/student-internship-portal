@@ -1,44 +1,197 @@
-# MERN
+# Student Internship Portal (MERN Stack)
 
-This is a simple NodeJS + Express + React + MongoDB application. This application serves as a basic template for a mern applications.
+A full-stack web application built with MongoDB, Express, React, and Node.js for managing and submitting student internship applications.
 
-What does this application do?
--------------------------------
-This application serves a simple MERN based TODO application to demonstrate the use of MERN stack. This application uses following technologies:
-- MongoDB: used as database
-- Express: used as web application framework
-- React: used as frontend framework to build UI
-- NodeJS: used as backend server
+## Table of Contents
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Environment Configuration](#environment-configuration)
+- [Local Development](#local-development)
+- [API Endpoints](#api-endpoints)
+- [Deployment Guide](#deployment-guide)
+  - [Backend on Render](#backend-on-render)
+  - [Frontend on Vercel](#frontend-on-vercel)
+- [Verification & Screenshots](#verification--screenshots)
 
+---
 
-## How to run
+## Overview
 
-Before running the application, make sure all dependencies are installed. 
+The Student Internship Portal provides a seamless workflow for students to discover verified tech internship opportunities and apply online:
+1. **Internship Directory**: Explore curated roles with clear details on compensation, duration, location, and required technical skills.
+2. **Detailed Position View**: Dedicated route (`/internships/:id`) detailing job specifications and responsibilities.
+3. **Application Submission**: Validated application form capturing student name, email, roll number, and selected internship.
+4. **MongoDB Persistence**: Mongoose schema and async REST API storing submissions with timestamps and returning unique IDs.
+5. **Submitted Applications Tracker**: Real-time review page (`/applications`) fetching records sorted newest first.
 
-1. Install server & client dependencies, run following command in terminal:
-   > `npm install; cd client && npm install && cd ..`
+---
 
-2. Run following command to start both server and client:
-   > `npm run dev`
+## Project Structure
 
-3. Refresh the URL in simple browser to see the output.
+```
+my-project/
+├── .vscode/                     # VS Code workspace settings
+├── src/
+│   ├── routes/
+│   │   └── index.js             # Express API routes
+│   └── models/
+│       └── Application.js       # Mongoose Application schema
+├── client/                      # React frontend (Vite)
+│   ├── public/                  # Public assets
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── InternshipCard.jsx
+│   │   │   └── ApplicationForm.jsx
+│   │   ├── pages/
+│   │   │   ├── InternshipList.jsx
+│   │   │   ├── InternshipDetails.jsx
+│   │   │   └── Applications.jsx
+│   │   ├── api.js               # Centralized API fetch layer
+│   │   ├── App.jsx              # App layout and route definitions
+│   │   ├── App.css              # Application design styles
+│   │   ├── index.css            # Base accessibility and resets
+│   │   └── main.jsx             # React entry point with BrowserRouter
+│   ├── index.html
+│   ├── vite.config.js           # Vite config with dev proxy
+│   ├── vercel.json              # SPA routing rewrite rule
+│   ├── package.json
+│   └── package-lock.json
+├── app.js                       # Express server and DB initialization
+├── package.json                 # Backend dependencies & scripts
+├── package-lock.json
+├── .env                         # Local secrets (never committed)
+├── .env.example                 # Environment template
+├── .gitignore                   # Ignore rules
+├── Dockerfile                   # Multi-stage production container
+└── README.md
+```
 
+---
 
+## Prerequisites
 
-## FAQs & Debugging
+- Node.js >= 18.x (Node 20+ recommended)
+- npm >= 9.x
+- MongoDB connection URI
 
-### 1. Node server failing to connect to Database
+---
 
-   Ensure Mongo_DB_URI is set in .env file. If not, create a new file named `.env` in root directory and add following line:
-   > `MONGO_DB_URI=<YOUR_MONGO_DB_URI>`
+## Environment Configuration
 
-   Once the studio is connected to your workspace, `MONGO_DB_URI` should be automatically set in your `.env` file.
+Create a `.env` file at the root directory based on `.env.example`:
 
-   Alternatively, you can create `MONGO_DB_URI` using value present in the file **.vscode/.studio/studio-env.json**.
-   MONGO_DB_URI typically looks like this:
-> `mongodb://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<DATABASE_NAME>`
+```bash
+# Server Configuration
+PORT=5000
+NODE_ENV=development
 
-### 2. Can I start server and client separately?   
-   `npm run dev` starts both server and client. If you want to start them separately, you can use following commands:
-   - `npm run server`: to start server
-   - `npm run client`: to start client
+# Allowed CORS origins (comma-separated, no trailing slash)
+FRONTEND_URL=http://localhost:5173,http://127.0.0.1:5173,https://internship-portal-khaki.vercel.app
+
+# Complete MongoDB connection URI
+MONGO_DB_URI=mongodb://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<DATABASE_NAME>
+```
+
+> **Security Note:** Never commit `.env` files or expose database credentials in repository commits or client-side code.
+
+---
+
+## Local Development
+
+### 1. Install Dependencies
+```bash
+# Install root (backend) dependencies
+npm install
+
+# Install client (frontend) dependencies
+npm --prefix client install
+```
+
+### 2. Start Servers
+
+You can run both backend and frontend concurrently:
+```bash
+npm run dev:all
+```
+
+Or run them individually in separate terminal sessions:
+```bash
+# Terminal 1: Start Express backend with nodemon
+npm run dev
+
+# Terminal 2: Start Vite React frontend
+npm run client
+```
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:5000`
+
+### 3. Build & Lint Frontend
+```bash
+# Run ESLint on client code
+npm --prefix client run lint
+
+# Production build
+npm --prefix client run build
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | API status and database connection state |
+| `GET` | `/api/health` | Healthcheck (HTTP 200 when DB connected, 503 otherwise) |
+| `GET` | `/api/internships` | List all available internship postings |
+| `GET` | `/api/internships/:id` | Fetch specific internship details by ID |
+| `POST` | `/api/applications` | Submit application (`studentName`, `email`, `rollNumber`, `internshipId`) |
+| `GET` | `/api/applications` | List all submitted applications (sorted newest first) |
+
+### Sample POST `/api/applications` Request:
+```json
+{
+  "studentName": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "rollNumber": "21CS042",
+  "internshipId": "frontend-developer"
+}
+```
+
+---
+
+## Deployment Guide
+
+### Backend on Render
+
+- **Repository**: `https://github.com/Shankar-Prakasam/Internship-portal`
+- **Branch**: `main`
+- **Root Directory**: `.` (leave empty / repository root)
+- **Runtime**: `Node`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Environment Variables**:
+  - `MONGO_DB_URI`: `<Your MongoDB Connection URI>`
+  - `FRONTEND_URL`: `https://internship-portal-khaki.vercel.app`
+  - `NODE_ENV`: `production`
+
+### Frontend on Vercel
+
+- **Repository**: `https://github.com/Shankar-Prakasam/Internship-portal`
+- **Branch**: `main`
+- **Framework Preset**: `Vite`
+- **Root Directory**: `client`
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Environment Variables**:
+  - `VITE_API_URL`: `https://internship-portal-rr66.onrender.com` (do not append `/api` or trailing slashes)
+
+---
+
+## Verification & Screenshots
+
+To capture screenshots for ByteXL submission:
+1. **Application Submission**: Open the internship details page for any role (e.g. `Frontend Developer Intern`), fill out the form, click **Submit Application**, and capture the green confirmation banner with the generated Application Reference ID.
+2. **Application Retrieval**: Navigate to the **Applications** page (`/applications`), verify your submitted record is visible in the table with student name, email, roll number, role title, and timestamp, and take a screenshot.
