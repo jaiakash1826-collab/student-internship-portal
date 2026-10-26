@@ -22,15 +22,56 @@ const configuredOrigins = (process.env.FRONTEND_URL || '')
 
 const allowedOrigins = Array.from(new Set([...defaultOrigins, ...configuredOrigins]));
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // Allow non-browser requests (curl, server-to-server)
+  const normalized = origin.trim().replace(/\/+$/, '');
+
+  // Exact match from allowed list
+  if (allowedOrigins.includes(normalized)) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    const hostname = parsed.hostname;
+
+    // Local development hosts
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+      return true;
+    }
+
+    // Vercel deployment domains
+    if (hostname.endsWith('.vercel.app')) {
+      return true;
+    }
+
+    // ByteXL / Studio cloud workspace hosts
+    if (
+      hostname.endsWith('.ws6.app') ||
+      hostname.endsWith('.bytexl.app') ||
+      hostname.endsWith('.bytexl.in') ||
+      hostname.endsWith('.bytexl.com')
+    ) {
+      return true;
+    }
+
+    // Studio host from environment if configured
+    if (process.env.STUDIO_HOST && hostname.endsWith(process.env.STUDIO_HOST)) {
+      return true;
+    }
+  } catch (err) {
+    return false;
+  }
+
+  return false;
+}
+
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
-    const normalized = origin.trim().replace(/\/+$/, '');
-    if (allowedOrigins.includes(normalized) || normalized.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
+    console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
     return callback(new Error('Blocked by CORS policy: Origin not allowed'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
