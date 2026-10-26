@@ -166,7 +166,7 @@ npm --prefix client run build
 
 ### Backend on Render
 
-- **Repository**: `https://github.com/Shankar-Prakasam/Internship-portal`
+- **Repository**: `https://github.com/jaiakash1826-collab/student-internship-portal`
 - **Branch**: `main`
 - **Root Directory**: `.` (leave empty / repository root)
 - **Runtime**: `Node`
@@ -179,7 +179,7 @@ npm --prefix client run build
 
 ### Frontend on Vercel
 
-- **Repository**: `https://github.com/Shankar-Prakasam/Internship-portal`
+- **Repository**: `https://github.com/jaiakash1826-collab/student-internship-portal`
 - **Branch**: `main`
 - **Framework Preset**: `Vite`
 - **Root Directory**: `client`
