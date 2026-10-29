@@ -45,6 +45,11 @@ function isAllowedOrigin(origin) {
       return true;
     }
 
+    // Render deployment domains
+    if (hostname.endsWith('.onrender.com')) {
+      return true;
+    }
+
     // ByteXL / Studio cloud workspace hosts
     if (
       hostname.endsWith('.ws6.app') ||
