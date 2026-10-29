@@ -144,16 +144,40 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
 
 // Startup function to ensure MongoDB connects before listening
 async function startServer() {
-  const mongoUri = process.env.MONGO_DB_URI;
+  let mongoUri = (process.env.MONGO_DB_URI || process.env.MONGODB_URI || '').trim();
 
-  if (!mongoUri || typeof mongoUri !== 'string' || !mongoUri.trim()) {
+  // Strip accidental quotes if pasted as "..." or '...'
+  if ((mongoUri.startsWith('"') && mongoUri.endsWith('"')) || (mongoUri.startsWith("'") && mongoUri.endsWith("'"))) {
+    mongoUri = mongoUri.slice(1, -1).trim();
+  }
+
+  // Strip accidental variable prefix if pasted as MONGO_DB_URI=... or MONGODB_URI=...
+  if (mongoUri.startsWith('MONGO_DB_URI=') || mongoUri.startsWith('MONGODB_URI=')) {
+    mongoUri = mongoUri.substring(mongoUri.indexOf('=') + 1).trim();
+    if ((mongoUri.startsWith('"') && mongoUri.endsWith('"')) || (mongoUri.startsWith("'") && mongoUri.endsWith("'"))) {
+      mongoUri = mongoUri.slice(1, -1).trim();
+    }
+  }
+
+  if (!mongoUri) {
     console.error('Fatal configuration error: MONGO_DB_URI environment variable is missing.');
     process.exit(1);
   }
 
+  // Append database name if missing in connection string
+  try {
+    const urlObj = new URL(mongoUri);
+    if (!urlObj.pathname || urlObj.pathname === '/') {
+      urlObj.pathname = '/internship_portal';
+      mongoUri = urlObj.toString();
+    }
+  } catch (e) {
+    // Continue with original URI if URL constructor fails
+  }
+
   try {
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(mongoUri.trim(), {
+    await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 15000,
     });
     console.log('MongoDB connection successfully established.');
@@ -165,7 +189,7 @@ async function startServer() {
       });
     });
   } catch (error) {
-    console.error('Fatal database error: Failed to connect to MongoDB within timeout.');
+    console.error('Fatal database error:', error.message || error);
     process.exit(1);
   }
 }
